@@ -1,4 +1,4 @@
-# Everybody's Writting Bit Torrent #
+# Everybody's Writing Bit Torrent #
 so why not me?
 
 good question, actually.

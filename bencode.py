@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 """bencode for Bittorrent
 By Kimberly McCarty
 It's for fun, okay?
@@ -25,6 +26,10 @@ class Parser(object):
         self.cursor = 0
         self.s = ""
 
+    #return character at current position
+    def _char(self):
+        return chr(self.s[self.cursor])
+
 
     def parse(self, s):
         # Assume a full statement is a well-formed entire Bencoded statement
@@ -35,7 +40,7 @@ class Parser(object):
         return result
 
     def b(self):
-        char = self.s[self.cursor]
+        char = self._char()
         if char == "l":
             return self.l()
         elif char == "d":
@@ -48,7 +53,8 @@ class Parser(object):
 
     #broke grammar rule nomenclature to prevent confusion with self.s, our string buffer
     def string(self):
-        len_raw = re.search(r"^(\d*):", self.s[self.cursor::]).group(1)
+        # decoding ignores "illegal" characters, because only digits and colon will be of concern to us, and if those aren't there, this isn't a string
+        len_raw = re.search(r"^(\d*):", self.s[self.cursor::].decode("utf-8", "ignore")).group(1)
         len_int = int(len_raw)
         # get the string from length of the integer descriptor, plus one for the ':'
         start = self.cursor + len(len_raw) + 1
@@ -57,11 +63,12 @@ class Parser(object):
         #move cursor past this stuff for the next thing to parse
         self.cursor = end
         assert(len(str_) == len_int)
+        print(str_)
         return str_
 
     def i(self):
-        assert(self.s[self.cursor] == 'i')
-        raw, i_raw = re.search("^(i(-?\d*)e)", self.s[self.cursor::]).groups()
+        assert(self._char() == 'i')
+        raw, i_raw = re.search("^(i(-?\d*)e)", self.s[self.cursor::].decode("utf-8", "ignore")).groups()
         i_ = int(i_raw)
         len_ = len(raw)
         #move past what we've parsed to the next thing
@@ -71,22 +78,23 @@ class Parser(object):
 
     # It can't be this simple!  Recursion is wild! This is supposed to be hard!  I'm screwing up in a way I haven't recognised!
     def l(self):
-        assert(self.s[self.cursor] == "l")
+        assert(self._char() == "l")
         self.cursor += 1
         result = []
-        while self.s[self.cursor] != "e":
-            result += b
+        while self._char() != "e":
+            result += self.b()
         self.cursor += 1
         return result
 
 
     def d(self):
-        assert(self.s[self.cursor] == "d")
+    
+        assert(self._char() == "d")
         self.cursor += 1
         result = {}
-        while self.s[self.cursor] != "e":
+        while self._char() != "e":
             key = self.string()
-            result[key] == self.b()
+            result[key] = self.b()
         self.cursor += 1
         return result 
 
@@ -117,3 +125,9 @@ def encode_dict(d):
         encoded.append(encode(key))
         encoded.append(encode(value))
     return "d{}e".format("".join(encoded))
+
+# the code below was used to test this with a sample torrent file
+# if __name__ == "__main__":
+#     with open("sample.torrent", "rb") as f:
+#         p = Parser()
+#         print(p.parse(f.read()))

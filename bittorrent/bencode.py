@@ -6,6 +6,10 @@ It's for fun, okay?
 from collections import OrderedDict
 import string
 import re
+import hashlib
+import logging
+
+# FIXME: Ensure the entire encoder works with bytes!
 
 
 
@@ -16,7 +20,7 @@ def encode(e):
         return encode_dict(e)
     elif type(e) == int:
         return encode_integer(e)
-    elif type(e) == str:
+    elif (type(e) == str) or (type(e) == bytes):
         return encode_string(e)
     else:
         raise(ValueError("Invalid type, must be str, int, list, or dict"))
@@ -49,6 +53,9 @@ class Parser(object):
             return self.i()
         elif char in string.digits:
             return self.string()
+        else:
+            logging.warning("B found nonetype")
+            return None
 
 
     #broke grammar rule nomenclature to prevent confusion with self.s, our string buffer
@@ -63,7 +70,7 @@ class Parser(object):
         #move cursor past this stuff for the next thing to parse
         self.cursor = end
         assert(len(str_) == len_int)
-        print(str_)
+        # print(str_)
         return str_
 
     def i(self):
@@ -98,33 +105,52 @@ class Parser(object):
         self.cursor += 1
         return result 
 
+    def get_info_hash(self, path=None, dict_=None):
+        assert(path or dict_)
+        if path:
+            with open(path) as f:
+                metainfo = self.parse(f.read)
+        elif dict_:
+            metainfo = dict_
+        info = metainfo[b'info']
+        info_ben = encode(info)
+        #print(info_ben)
+        m = hashlib.sha1()
+        m.update(info_ben)
+        return m.digest()
+        
+
 
 #Helper functions for encode()
 def encode_string(s):
     l = len(s)
-    return "{}:{}".format(l, s)
+    if type(s) == bytes:
+        return bytes(str(l)+":", "utf-8") + s
+    # Assume if there's no bytestring, our string can be represented in UTF-8
+    return "{}:{}".format(l, s).encode("utf-8")
 
 
 def encode_integer(i):
-    return "i{}e".format(str(i))
+    return "i{}e".format(str(i)).encode("utf-8")
 
 
 def encode_list(l):
-    encoded = []
+    encoded = bytearray(b'l')
     for e in l:
-        encoded.append(encode(e))
-    return "l{}e".format("".join(encoded))
+        encoded.extend(encode(e))
+    return bytes(encoded.append(ord('e')))
 
 
 def encode_dict(d):
-    encoded = []
+    encoded = bytearray(b'd')
     # TODO consider accounting for weird raw bytestring behavior...
     od = OrderedDict(sorted(d.items()))
     for key, value in od.items():
-        assert(type(key) == str)
-        encoded.append(encode(key))
-        encoded.append(encode(value))
-    return "d{}e".format("".join(encoded))
+        assert(type(key) == str or type(key) == bytes)
+        encoded.extend(encode(key))
+        encoded.extend(encode(value))
+    encoded.append(ord("e"))
+    return bytes(encoded)
 
 # the code below was used to test this with a sample torrent file
 # if __name__ == "__main__":

@@ -5,6 +5,8 @@ import logging
 import requests
 import random
 import string
+import struct
+from ipaddress import IPv4Address
 
 
 # for now, I think I'll just parse the torrent file again as necessary, seeking what data I need on a provisional basis
@@ -58,11 +60,20 @@ def tracker_get(path):
             # "event": "started",
             "compact": 1, # mandatory on many servers
             }
+    print(metadata[b"announce"])
     r = requests.get(metadata[b"announce"], params=params)
     # print(r.content)
-    print(r.text)
-    print(p.parse(r.content))
+    response = p.parse(r.content)
+    print(unpack_peers(response[b'peers']))
 
+def unpack_peers(s):
+    # I get a bit cute with list comprehensions here, and I would like to be readable.  Bear with me!
+    # First, we slice the data into peer data with six bytes each.  Four for IPv4, two for the port's int
+    raw_peers = [s[x:x+6] for x in range(0, len(s), 6)]
+    # Then, take each six byte string, and parse each part
+    peers = [(IPv4Address(p[0:4]), struct.unpack("!H", p[4:6])[0]) for p in raw_peers]
+    # If I was feeling really clever, I could have done this in one operation, but that'd be hard to read and I'm not going for speed.
+    return peers
 
 if __name__=="__main__":
     tracker_get("../sample.torrent")

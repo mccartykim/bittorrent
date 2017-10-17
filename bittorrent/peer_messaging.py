@@ -1,5 +1,6 @@
 #! /usr/bin/python3
 from bencode import Parser
+import asyncio
 
 class PeerMessager(object):
     def __init__(self, infohash, tracker_url, peer_id, peers=[]):
@@ -8,51 +9,70 @@ class PeerMessager(object):
         self.peers = peers
         self.peer_id = peer_id
         self.pieces = []
+        self.loop = asyncio.get_event_loop()
 
+    # TODO shared object to manage piece state...
 
-    def handshake(self, peer):
-        inital = "19BitTorrent protocol" 
+    async def start_connection(self, peer_id, peer):
+        reader, writer = await asyncio.open_connection(peer(0), peer(1), loop=self.loop)
+        self.handshake(peer_id, reader, writer)
+        # TODO spawn task to handle communications
+        
+
+    # NOTE consider connection object for each peer?
+    async def handshake(self, peer_id, reader, writer):
+        inital = b"19BitTorrent protocol" 
+        await writer.write(inital)
         blanks = b'\x00'*8
-        # TODO raw infohash
-        # TODO if raw infohashes not equal, sever
-        # TODO send peer id as 20 byte string
+        await self.write_prefixed(blanks, writer)
+        infohash = self.infohash
+        await self.write_prefixed(infohash, writer)
+        await self.write_prefixed(self.peer_id, writer)
+        return True
+
+    async def write_prefixed(self, bs, writer):
+        return writer.write(self.len_prefix(bs))
+
+    @staticmethod
+    def len_prefix(bs):
+        p = str(len(bs))
+        return p + bs
 
 
-    def keepalive(self):
+    async def keepalive(self, writer):
+        return b"0"
+
+    async def choke(self, writer):
+        return b"1\0"
+        
+    async def unchoke(self, writer):
+        return b"1\0"
+    
+
+    async def interested(self, writer):
         pass
 
 
-    def choke(self, peer):
-        pass
-
-
-    def unchoke(self, peer):
+    async def not_interested(self, writer):
         pass
     
 
-    def interested(self, peer):
+    async def have(self, peer, piece_index, writer):
         pass
 
 
-    def not_interested(self, peer):
-        pass
-    
-
-    def have(self, peer, piece_index):
+    # TODO figure out what exactly bitfield is :-(
+    async def bitfield(self, peer, writer):
         pass
 
 
-    def bitfield(self, peer):
+    async def request(self, peer, piece_index, begin, length, writer):
         pass
 
 
-    def request(self, peer, piece_index):
-        pass
-
-
-    def piece(self, peer, piece_index, begin):
+    async def piece(self, peer, piece_index, begin, writer):
         pass
 
     
-    def cancel(self, peer, begin, length):
+    async def cancel(self, peer, index, begin, length, writer):
         pass

@@ -31,6 +31,9 @@ from ipaddress import IPv4Address
 #         filename = metadata[b"name"]
         
     
+def parse_torrent(path):
+
+
 def tracker_get(path):
     p = Parser()
     metadata = None

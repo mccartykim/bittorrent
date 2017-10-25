@@ -114,3 +114,9 @@ class PeerMessager(object):
         header = b"\x08"
         message = struct.pack(">l", index) + struct.pack(">l", begin) + struct.pack(">l", length)
         self.write_prefixed(header+message, peer.writer)
+
+    async def read_message(self, peer):
+        size = struct.unpack(">l", await peer.reader.recv(4))
+        message = await peer.reader.recv(size)
+        return message
+

@@ -116,7 +116,7 @@ class PeerMessager(object):
         self.write_prefixed(header+message, peer.writer)
 
     async def read_message(self, peer):
-        size = struct.unpack(">l", await peer.reader.recv(4))
-        message = await peer.reader.recv(size)
+        size = struct.unpack(">l", await peer.reader.read(4))
+        message = await peer.reader.read(size)
         return message
 

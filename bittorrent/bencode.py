@@ -138,7 +138,8 @@ def encode_list(l):
     encoded = bytearray(b'l')
     for e in l:
         encoded.extend(encode(e))
-    return bytes(encoded.append(ord('e')))
+    encoded.append(ord('e'))
+    return bytes(encoded)
 
 
 def encode_dict(d):

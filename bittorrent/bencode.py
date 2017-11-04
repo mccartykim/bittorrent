@@ -25,19 +25,20 @@ def encode(e):
     else:
         raise(ValueError("Invalid type, must be str, int, list, or dict"))
 
+
 class Parser(object):
     def __init__(self):
         self.cursor = 0
         self.s = ""
 
-    #return character at current position
+    # return character at current position
     def _char(self):
         return chr(self.s[self.cursor])
 
-
     def parse(self, s):
         # Assume a full statement is a well-formed entire Bencoded statement
-        # This statement is not to be called recursively, it just manages the initial call and sets cursor/s to valid values
+        # This statement is not to be called recursively,
+        # it just manages the initial call and sets cursor/s to valid values
         self.s = s
         self.cursor = 0
         result = self.b()
@@ -124,6 +125,7 @@ class Parser(object):
 #Helper functions for encode()
 def encode_string(s):
     l = len(s)
+    print(s)
     if type(s) == bytes:
         return bytes(str(l)+":", "utf-8") + s
     # Assume if there's no bytestring, our string can be represented in UTF-8

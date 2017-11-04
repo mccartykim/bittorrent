@@ -2,9 +2,27 @@
 
 import unittest
 import bencode
+from hypothesis import given
+from hypothesis.strategies import binary, integers, lists, dictionaries
 
 
 class TestBencodeMethods(unittest.TestCase):
+
+    @given(binary())
+    def test_invert_string(self, s):
+        p = bencode.Parser()
+        self.assertEqual(p.parse(bencode.encode(s)), s)
+
+    @given(integers())
+    def test_invert_integer(self, n):
+        p = bencode.Parser()
+        self.assertEqual(n, p.parse(bencode.encode(n)))
+
+    @given(lists(binary(), max_size=99))
+    def test_invert_lists(self, l):
+        p = bencode.Parser()
+        print(l)
+        self.assertEqual(p.parse(bencode.encode(l)), l)
 
     def test_encode(self):
         # int

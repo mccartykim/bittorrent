@@ -25,20 +25,23 @@ def encode(e):
     else:
         raise(ValueError("Invalid type, must be str, int, list, or dict"))
 
+
 class Parser(object):
     def __init__(self):
         self.cursor = 0
-        self.s = ""
+        self.s = b""
 
-    #return character at current position
+    # return character at current position
     def _char(self):
         return chr(self.s[self.cursor])
 
-
     def parse(self, s):
         # Assume a full statement is a well-formed entire Bencoded statement
-        # This statement is not to be called recursively, it just manages the initial call and sets cursor/s to valid values
+        # This statement is not to be called recursively,
+        # it just manages the initial call and sets cursor/s to valid values
         self.s = s
+        if type(self.s) != bytes:
+            self.s = self.s.encode()
         self.cursor = 0
         result = self.b()
         return result
@@ -54,7 +57,8 @@ class Parser(object):
         elif char in string.digits:
             return self.string()
         else:
-            logging.warning("B found nonetype")
+            logging.info("B found nonetype")
+            print("B found nonetype")
             return None
 
 
@@ -70,7 +74,7 @@ class Parser(object):
         #move cursor past this stuff for the next thing to parse
         self.cursor = end
         assert(len(str_) == len_int)
-        # print(str_)
+        assert(type(str_) == bytes)
         return str_
 
     def i(self):
@@ -89,7 +93,7 @@ class Parser(object):
         self.cursor += 1
         result = []
         while self._char() != "e":
-            result += self.b()
+            result.append(self.b())
         self.cursor += 1
         return result
 
@@ -138,7 +142,8 @@ def encode_list(l):
     encoded = bytearray(b'l')
     for e in l:
         encoded.extend(encode(e))
-    return bytes(encoded.append(ord('e')))
+    encoded.append(ord('e'))
+    return bytes(encoded)
 
 
 def encode_dict(d):

@@ -4,7 +4,7 @@ import asyncio
 import struct
 import math
 
-"""Let's define a peer dictionary/object:
+"""Let's define a peer object:
 Peer
 + writer
 + reader
@@ -22,8 +22,7 @@ class Peer(object):
         self.reader = None
         self.pieces = [None] * len(metainfo[b'pieces'])
 
-
-class PeerMessager(object):
+class PeerMessenger(object):
     def __init__(self, metainfo):
         peers = []
         for peer in metainfo[b'peers']:
@@ -41,7 +40,8 @@ class PeerMessager(object):
         peer.reader = reader
         self.handshake(peer)
         # TODO spawn task to handle communications
-        
+
+
 
     # NOTE consider connection object for each peer?
     async def handshake(self, peer):

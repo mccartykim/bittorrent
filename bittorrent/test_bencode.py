@@ -21,7 +21,6 @@ class TestBencodeMethods(unittest.TestCase):
     @given(lists(binary(), max_size=99))
     def test_invert_lists(self, l):
         p = bencode.Parser()
-        print(l)
         self.assertEqual(p.parse(bencode.encode(l)), l)
 
     def test_encode(self):
